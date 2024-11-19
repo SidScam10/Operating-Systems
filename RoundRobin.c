@@ -8,145 +8,95 @@ struct Process {
 };
 
 struct Queue {
-    int front, rear, size, capacity;
-    int* arr;
+    int front, rear, size, capacity, *arr;
 };
 
-struct Queue* createQueue() {
-    struct Queue* queue = (struct Queue*)malloc(sizeof(struct Queue));
-    queue->capacity = 25;
-    queue->front = queue->size = 0;
-    queue->rear = queue->capacity - 1;
-    queue->arr = (int*)malloc(queue->capacity * sizeof(int));
-    return queue;
+struct Queue* createQueue(int capacity) {
+    struct Queue* q = malloc(sizeof(struct Queue));
+    q->capacity = capacity;
+    q->front = q->size = 0;
+    q->rear = capacity - 1;
+    q->arr = malloc(capacity * sizeof(int));
+    return q;
 }
 
-bool isFull(struct Queue* queue) {
-    return (queue->size == queue->capacity);
+bool isEmpty(struct Queue* q) { return q->size == 0; }
+void enqueue(struct Queue* q, int item) {
+    if (q->size < q->capacity) {
+        q->rear = (q->rear + 1) % q->capacity;
+        q->arr[q->rear] = item;
+        q->size++;
+    }
 }
 
-bool isEmpty(struct Queue* queue) {
-    return (queue->size == 0);
-}
-
-void enqueue(struct Queue* queue, int item) {
-    if (isFull(queue))
-        return;
-    queue->rear = (queue->rear + 1) % queue->capacity;
-    queue->arr[queue->rear] = item;
-    queue->size = queue->size + 1;
-}
-
-int dequeue(struct Queue* queue) {
-    if (isEmpty(queue))
-        return -1;
-    int item = queue->arr[queue->front];
-    queue->front = (queue->front + 1) % queue->capacity;
-    queue->size = queue->size - 1;
+int dequeue(struct Queue* q) {
+    if (isEmpty(q)) return -1;
+    int item = q->arr[q->front];
+    q->front = (q->front + 1) % q->capacity;
+    q->size--;
     return item;
 }
 
 int main() {
+    int n, quantum, time = 0, completed = 0, exec_ind = 0;
     printf("Enter number of processes: ");
-    int n;
     scanf("%d", &n);
 
     struct Process processes[n];
+    struct Queue* queue = createQueue(n);
+    int exec_order[1000], wt = 0, tat = 0;
 
     for (int i = 0; i < n; i++) {
-        processes[i].id = i + 1;
         printf("Enter Arrival Time & Burst Time of Process P%d: ", i + 1);
         scanf("%d %d", &processes[i].at, &processes[i].bt);
-        processes[i].rt = processes[i].bt;
-        processes[i].q = false;
+        processes[i] = (struct Process){i + 1, processes[i].at, processes[i].bt, 0, 0, 0, 0, processes[i].bt, false};
     }
 
-    int quantum;
     printf("Enter the time quantum: ");
     scanf("%d", &quantum);
 
-    struct Queue* queue = createQueue();
-    int time = 0, completed = 0;
-
-    int exec_order[1000];
-    int exec_ind = 0;
-
-    for (int i = 0; i < n; i++) {
-        if (processes[i].at <= time) {
-            enqueue(queue, i);
-            processes[i].q = true;
-        }
-    }
-
-    int curr_process;
     while (completed < n) {
-        curr_process = dequeue(queue);
-
-        if (curr_process == -1) {
-            time++;
-            for (int i = 0; i < n; i++) {
-                if (processes[i].at <= time && processes[i].rt > 0 && !processes[i].q) {
-                    enqueue(queue, i);
-                    processes[i].q = true;
-                }
+        for (int i = 0; i < n; i++) {
+            if (processes[i].at <= time && !processes[i].q && processes[i].rt > 0) {
+                enqueue(queue, i);
+                processes[i].q = true;
             }
+        }
+
+        int curr = dequeue(queue);
+        if (curr == -1) {
+            time++;
             continue;
         }
 
-        exec_order[exec_ind++] = processes[curr_process].id;
+        exec_order[exec_ind++] = processes[curr].id;
+        if (processes[curr].bt == processes[curr].rt) processes[curr].st = time;
 
-        if (processes[curr_process].bt == processes[curr_process].rt) {
-            processes[curr_process].st = time;
-        }
+        int t = (processes[curr].rt <= quantum) ? processes[curr].rt : quantum;
+        time += t;
+        processes[curr].rt -= t;
 
-        if (processes[curr_process].rt <= quantum) {
-            time += processes[curr_process].rt;
-            processes[curr_process].rt = 0;
-            processes[curr_process].ct = time;
-            processes[curr_process].tat = processes[curr_process].ct - processes[curr_process].at;
-            processes[curr_process].wt = processes[curr_process].tat - processes[curr_process].bt;
+        if (processes[curr].rt == 0) {
+            processes[curr].ct = time;
+            processes[curr].tat = processes[curr].ct - processes[curr].at;
+            processes[curr].wt = processes[curr].tat - processes[curr].bt;
+            wt += processes[curr].wt;
+            tat += processes[curr].tat;
             completed++;
-            processes[curr_process].q = false;
-
-            for (int i = 0; i < n; i++) {
-                if (processes[i].at <= time && processes[i].rt > 0 && !processes[i].q) {
-                    enqueue(queue, i);
-                    processes[i].q = true;
-                }
-            }
         } else {
-            time += quantum;
-            processes[curr_process].rt -= quantum;
-            for (int i = 0; i < n; i++) {
-                if (processes[i].at <= time && processes[i].rt > 0 && !processes[i].q) {
-                    enqueue(queue, i);
-                    processes[i].q = true;
-                }
-            }
-
-            enqueue(queue, curr_process);
+            enqueue(queue, curr);
         }
     }
 
     printf("\nGantt Chart: ");
-    for (int i = 0; i < exec_ind; i++) {
-        printf("P%d ", exec_order[i]);
-    }
+    for (int i = 0; i < exec_ind; i++) printf("P%d ", exec_order[i]);
 
-    int wt = 0, tat = 0;
-    printf("\nProcess\tArrival_Time\tBurst_Time\tStart_Time\tCompletion_Time\tTurn_Around_Time\tWaiting_Time\n");
+    printf("\nProcess\tAT\tBT\tST\tCT\tTAT\tWT\n");
     for (int i = 0; i < n; i++) {
-        wt += processes[i].wt;
-        tat += processes[i].tat;
-        printf("P%d\t%d\t\t%d\t\t%d\t\t%d\t\t%d\t\t\t%d\n",
-               processes[i].id, processes[i].at, processes[i].bt, processes[i].st,
-               processes[i].ct, processes[i].tat, processes[i].wt);
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\n", processes[i].id, processes[i].at, processes[i].bt, 
+               processes[i].st, processes[i].ct, processes[i].tat, processes[i].wt);
     }
 
-    double avg_wt = 1.0 * wt / n;
-    double avg_tat = 1.0 * tat / n;
-    printf("\nAverage Waiting Time: %.2f\n", avg_wt);
-    printf("Average TurnAround Time: %.2f\n", avg_tat);
-
+    printf("\nAverage WT: %.2f\nAverage TAT: %.2f\n", (double)wt / n, (double)tat / n);
     return 0;
 }
