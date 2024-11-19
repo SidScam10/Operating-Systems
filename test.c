@@ -1,82 +1,56 @@
 #include<stdio.h>
 
-void display_blocks(int block[],int frame_size)
-{
-    for(int i=0;i<frame_size;i++)
-    {
-        if(block[i]==-1) printf("- ");
-        else printf("%d ",block[i]);
-    }
-    printf("\n");
-}
-int find_opt(int blocks[], int pages[], int frame_size, int curr_ind, int n)
-{
-    int farthest=curr_ind,index=0;
-    for(int i=0;i<frame_size;i++)
-    {
-        int j;
-        for(j=curr_ind;j<n;j++)
-        {
-            if(blocks[i]==pages[j])
-            {
-                if(j>farthest)
-                {
-                    farthest=j;
-                    index=i;
-                }
-                break;   
-            }
-        }
-        if(j==n) return i;
-    }
-    return index;
-}
+struct Process {
+    int id,at,bt,st,ct,pri,tat,wt,rt;
+};
+
 int main()
 {
-    int n,frame_size;
-    printf("Enter Number of Pages: ");
+    int n,wt=0,tat=0;
+    printf("Enter Number of Processes: ");
     scanf("%d",&n);
-
-    int pages[n];
-    printf("Enter Pages: ");
+    struct Process arr[n];
     for(int i=0;i<n;i++)
     {
-        scanf("%d",&pages[i]);
+        arr[i].id=i+1;
+        printf("Enter Arrival Time, Burst Time and Priority of Process P%d: ",i+1);
+        scanf("%d %d %d",&arr[i].at,&arr[i].bt,&arr[i].pri);
+        arr[i].ct=0;
     }
-
-    printf("Enter Frame Size: ");
-    scanf("%d",&frame_size);
-
-    int blocks[frame_size],hits=0,miss=0;
-    for(int i=0;i<frame_size;i++) blocks[i]=-1;
-
+    int completed=0,time=0;
+    while(completed<n)
+    {
+        int max=-1, highest_pri=-1;
+        for(int i=0;i<n;i++)
+        {
+            if(arr[i].at<=time && arr[i].ct==0 && arr[i].pri>highest_pri)
+            {
+                max=i;
+                highest_pri=arr[i].pri;
+            }
+        }
+        if(max!=-1)
+        {
+            printf("%d ",arr[max].id);
+            arr[max].st=time;
+            arr[max].ct=time+arr[max].bt;
+            arr[max].tat=arr[max].ct-arr[max].at;
+            arr[max].wt=arr[max].tat-arr[max].bt;
+            time=arr[max].ct;
+            completed++;
+            wt+=arr[max].wt;
+            tat+=arr[max].tat;
+        }
+        else
+        {
+            time++;
+        }
+    }
+    printf("\nProcess\tPriority\tAT\tBT\tST\tCT\tTAT\tWT\n");
     for(int i=0;i<n;i++)
     {
-        int found=0;
-        for(int j=0;j<frame_size;j++)
-        {
-            if(blocks[j]==pages[i])
-            {
-                found=1;
-                hits++;
-                break;
-            }
-        }
-        if(!found)
-        {
-            if(i<frame_size)
-            {
-                blocks[i]=pages[i];
-            }
-            else
-            {
-                int replace=find_opt(blocks,pages, frame_size, i+1, n);
-                blocks[replace]=pages[i];
-            }
-            miss++;
-        }
-        display_blocks(blocks,frame_size);
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",arr[i].id,arr[i].pri,arr[i].at,arr[i].bt,arr[i].st,arr[i].ct,arr[i].tat,arr[i].wt);
     }
-    printf("Hits: %d\nMisses: %d\nHit Ratio: %.2f\nMiss Ratio: %.2f\n",hits,miss,(float)hits/n,(float)miss/n);
+    printf("AVG TAT: %.2f\nAVG WT: %.2f\n",(float)tat/n,(float)wt/n);
     return 0;
 }

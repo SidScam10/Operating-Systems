@@ -27,11 +27,11 @@ int main() {
 
     while (completed < n) {
         int max = -1;
-        int highest_priority = -1;
+        int lowest_priority = INT_MAX;
 
         for (int i = 0; i < n; i++) {
-            if (arr[i].at <= time && arr[i].ct == 0 && arr[i].priority > highest_priority) {
-                highest_priority = arr[i].priority;
+            if (arr[i].at <= time && arr[i].ct == 0 && arr[i].priority < lowest_priority) {
+                lowest_priority = arr[i].priority;
                 max = i;
             }
         }
