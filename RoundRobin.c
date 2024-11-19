@@ -42,14 +42,14 @@ int main() {
     printf("Enter number of processes: ");
     scanf("%d", &n);
 
-    struct Process processes[n];
+    struct Process arr[n];
     struct Queue* queue = createQueue(n);
     int exec_order[1000], wt = 0, tat = 0;
 
     for (int i = 0; i < n; i++) {
         printf("Enter Arrival Time & Burst Time of Process P%d: ", i + 1);
-        scanf("%d %d", &processes[i].at, &processes[i].bt);
-        processes[i] = (struct Process){i + 1, processes[i].at, processes[i].bt, 0, 0, 0, 0, processes[i].bt, false};
+        scanf("%d %d", &arr[i].at, &arr[i].bt);
+        arr[i] = (struct Process){i + 1, arr[i].at, arr[i].bt, 0, 0, 0, 0, arr[i].bt, false};
     }
 
     printf("Enter the time quantum: ");
@@ -57,9 +57,9 @@ int main() {
 
     while (completed < n) {
         for (int i = 0; i < n; i++) {
-            if (processes[i].at <= time && !processes[i].q && processes[i].rt > 0) {
+            if (arr[i].at <= time && !arr[i].q && arr[i].rt > 0) {
                 enqueue(queue, i);
-                processes[i].q = true;
+                arr[i].q = true;
             }
         }
 
@@ -69,19 +69,19 @@ int main() {
             continue;
         }
 
-        exec_order[exec_ind++] = processes[curr].id;
-        if (processes[curr].bt == processes[curr].rt) processes[curr].st = time;
+        exec_order[exec_ind++] = arr[curr].id;
+        if (arr[curr].bt == arr[curr].rt) arr[curr].st = time;
 
-        int t = (processes[curr].rt <= quantum) ? processes[curr].rt : quantum;
+        int t = (arr[curr].rt <= quantum) ? arr[curr].rt : quantum;
         time += t;
-        processes[curr].rt -= t;
+        arr[curr].rt -= t;
 
-        if (processes[curr].rt == 0) {
-            processes[curr].ct = time;
-            processes[curr].tat = processes[curr].ct - processes[curr].at;
-            processes[curr].wt = processes[curr].tat - processes[curr].bt;
-            wt += processes[curr].wt;
-            tat += processes[curr].tat;
+        if (arr[curr].rt == 0) {
+            arr[curr].ct = time;
+            arr[curr].tat = arr[curr].ct - arr[curr].at;
+            arr[curr].wt = arr[curr].tat - arr[curr].bt;
+            wt += arr[curr].wt;
+            tat += arr[curr].tat;
             completed++;
         } else {
             enqueue(queue, curr);
@@ -93,8 +93,8 @@ int main() {
 
     printf("\nProcess\tAT\tBT\tST\tCT\tTAT\tWT\n");
     for (int i = 0; i < n; i++) {
-        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\n", processes[i].id, processes[i].at, processes[i].bt, 
-               processes[i].st, processes[i].ct, processes[i].tat, processes[i].wt);
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\n", arr[i].id, arr[i].at, arr[i].bt, 
+               arr[i].st, arr[i].ct, arr[i].tat, arr[i].wt);
     }
 
     printf("\nAverage WT: %.2f\nAverage TAT: %.2f\n", (double)wt / n, (double)tat / n);
