@@ -9,20 +9,23 @@ void display_blocks(int block[],int frame_size)
     }
     printf("\n");
 }
-int find_opt(int blocks[], int pages[], int frame_size, int curr_ind, int n)
+int find_opt(int blocks[], int pages[], int n, int frame_size, int curr_ind)
 {
     int farthest=curr_ind,index=0;
     for(int i=0;i<frame_size;i++)
     {
         int j;
-        for(int j=curr_ind;j<n;j++)
+        for(j=curr_ind;j<n;j++)
         {
             if(blocks[i]==pages[j])
             {
-                farthest=j;
-                index=i;
+                if(j>farthest)
+                {
+                    farthest=j;
+                    index=i;
+                }
+                break;
             }
-            break;
         }
         if(j==n) return i;
     }
@@ -67,7 +70,7 @@ int main()
             }
             else
             {
-                int replace=find_opt(blocks,pages, frame_size, i+1, n);
+                int replace=find_opt(blocks,pages,n,frame_size,i+1);
                 blocks[replace]=pages[i];
             }
             miss++;

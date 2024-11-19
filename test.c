@@ -15,14 +15,17 @@ int find_opt(int blocks[], int pages[], int frame_size, int curr_ind, int n)
     for(int i=0;i<frame_size;i++)
     {
         int j;
-        for(int j=curr_ind;j<n;j++)
+        for(j=curr_ind;j<n;j++)
         {
             if(blocks[i]==pages[j])
             {
-                farthest=j;
-                index=i;
+                if(j>farthest)
+                {
+                    farthest=j;
+                    index=i;
+                }
+                break;   
             }
-            break;
         }
         if(j==n) return i;
     }
