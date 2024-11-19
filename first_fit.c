@@ -4,16 +4,19 @@
 int main()
 {
     int m,n;
-    printf("Enter Number of Blocks: ");
+    printf("Enter number of blocks: ");
     scanf("%d",&m);
-    printf("Enter Number of Processes: ");
-    scanf("%d",&n);
-
-    int block_size[m],proc_size[n];
-    for(int i=0;i<m;i++) 
+    int block_size[m];
+    printf("Enter block sizes: ");
+    for(int i=0;i<m;i++)
     {
         scanf("%d",&block_size[i]);
     }
+
+    printf("Enter Number of Process: ");
+    scanf("%d",&n);
+    int proc_size[n];
+    printf("Enter Process Sizes: ");
     for(int i=0;i<n;i++)
     {
         scanf("%d",&proc_size[i]);
@@ -24,18 +27,14 @@ int main()
 
     for(int i=0;i<n;i++)
     {
-        int best_ind=-1;
         for(int j=0;j<m;j++)
         {
             if(block_size[j]>=proc_size[i])
             {
-                if(best_ind==-1 || block_size[j]<block_size[best_ind]) best_ind=j;
+                alloc[i]=j;
+                block_size[j]-=proc_size[i];
+                break;
             }
-        }
-        if(best_ind!=-1)
-        {
-            alloc[i]=best_ind;
-            block_size[best_ind]-=proc_size[i];
         }
     }
 

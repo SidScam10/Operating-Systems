@@ -24,18 +24,18 @@ int main()
 
     for(int i=0;i<n;i++)
     {
-        int best_ind=-1;
+        int worst_ind=-1;
         for(int j=0;j<m;j++)
         {
             if(block_size[j]>=proc_size[i])
             {
-                if(best_ind==-1 || block_size[j]<block_size[best_ind]) best_ind=j;
+                if(worst_ind==-1 || block_size[j]>block_size[worst_ind]) worst_ind=j;
             }
         }
-        if(best_ind!=-1)
+        if(worst_ind!=-1)
         {
-            alloc[i]=best_ind;
-            block_size[best_ind]-=proc_size[i];
+            alloc[i]=worst_ind;
+            block_size[worst_ind]-=proc_size[i];
         }
     }
 
