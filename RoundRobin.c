@@ -47,9 +47,11 @@ int main() {
     int exec_order[1000], wt = 0, tat = 0;
 
     for (int i = 0; i < n; i++) {
+        arr[i].id=i+1;
         printf("Enter Arrival Time & Burst Time of Process P%d: ", i + 1);
         scanf("%d %d", &arr[i].at, &arr[i].bt);
-        arr[i] = (struct Process){i + 1, arr[i].at, arr[i].bt, 0, 0, 0, 0, arr[i].bt, false};
+        arr[i].rt=arr[i].bt;
+        arr[i].q=false;
     }
 
     printf("Enter the time quantum: ");
