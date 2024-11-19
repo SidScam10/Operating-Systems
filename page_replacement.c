@@ -92,7 +92,7 @@ void lru(int pages[], int n, int frame_size)
 
 int find_opt(int pages[], int blocks[], int frame_size, int currentIndex, int n) 
 {
-    int farthest = currentIndex, index = -1;
+    int farthest = currentIndex, index = 0;
     for (int i = 0; i < frame_size; i++) 
     {
         int j;
@@ -112,8 +112,6 @@ int find_opt(int pages[], int blocks[], int frame_size, int currentIndex, int n)
             return i;
         }
     }
-    if(index==-1)
-        return 0;
     return index;
 }
 
