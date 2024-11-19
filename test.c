@@ -1,97 +1,103 @@
 #include<stdio.h>
 #include<stdlib.h>
-int n;
-void display_blocks(int blocks[], int frame_size)
-{
-    for(int i=0;i<frame_size;i++)
-    {
-        if(blocks[i]==-1)
-        {
-            printf(" ");
-        }
-        else
-        {
-            printf("%d ",blocks[i]);
-        }
-    }
-    printf("\n");
-}
-void fifo(int pages[],int frame_size)
-{
-    int blocks[frame_size],hits=0,miss=0;
-    for(int i=0;i<frame_size;i++) blocks[i]=-1;
-    int index=0;
-    for(int i=0;i<n;i++)
-    {
-        int found=0;
-        for(int j=0;j<frame_size;j++)
-        {
-            if(blocks[j]==pages[i])
-            {
-                hits++;
-                found=1;
-                break;
-            }
-        }
-        if(!found)
-        {
-            blocks[index]=pages[i];
-            index=(index+1)%frame_size;
-            miss++;
-        }
-        display_blocks(blocks,frame_size);
-    }
-    printf("Hits: %d\tMiss: %d\tHit Ratio: %.3f\tMiss Ratio: %.3f",hits,miss,(float)hits/n,(float)miss/n);
-}
-void lru(int pages[],int frame_size)
-{
-    int block[frame_size],recent[frame_size],hit=0,miss=0;
-    for(int i=0;i<frame_size;i++)
-    {
-        block[i]=-1;
-        recent[i]=-1;
-    }
-    for(int i=0;i<n;i++)
-    {
-        int found=0,least_recent=0;
-        for(int j=0;j<frame_size;j++)
-        {
-            if(block[i]==recent[j])
-            {
-                hit++;
-                recent[j]=i;
-                found=1;
-                break;
-            }
-        }
-        if(!found)
-        {
-            for(int j=1;j<frame_size;j++)
-            {
-                if(recent[j]<recent[least_recent])
-                {
-                    least_recent=j;
-                }
-            }
-            block[least_recent]=pages[i];
-            recent[least_recent]=i;
-            miss++;
+#include<stdbool.h>
 
-        }
+struct Process {
+    int id,at,bt,st,ct,tat,wt,rt;
+    bool q;
+};
+struct Queue {
+    int front,rear,size,cap,*arr;
+};
+struct Queue* createQueue(int cap){
+    struct Queue* q=malloc(sizeof(struct Queue));
+    q->cap=cap;
+    q->front=q->size=0;
+    q->rear=cap-1;
+    q->arr=malloc(cap*sizeof(int));
+    return q;
+};
+bool isEmpty(struct Queue* q) { return q->size==0; }
+void enqueue(struct Queue* q,int item){
+    if(q->size<q->cap)
+    {
+        q->rear=(q->rear+1)%q->cap;
+        q->arr[q->rear]=item;
+        q->size++;
     }
-    printf("Hits: %d\tMiss: %d\tHit Ratio: %.3f\tMiss Ratio: %.3f",hit,miss,(float)hit/n,(float)miss/n);
+}
+int dequeue(struct Queue* q) {
+    if(isEmpty(q)) return -1;
+    int item=q->arr[q->front];
+    q->front=(q->front+1)%q->cap;
+    q->size--;
+    return item;
 }
 int main()
 {
-    printf("Enter Number of Pages: ");
+    int n,quantum,completed=0,time=0,tat=0,wt=0;
+    printf("Enter number of processes: ");
     scanf("%d",&n);
-    int pages[n];
+
+    struct Process arr[n];
+    struct Queue* queue=createQueue(n);
     for(int i=0;i<n;i++)
     {
-        scanf("%d",&pages[i]);
+        arr[i].id=i+1;
+        printf("Enter Arrival Time & Burst Time of Process P%d: ",i+1);
+        scanf("%d %d",&arr[i].at,&arr[i].bt);
+        arr[i].rt=arr[i].bt;
+        arr[i].q=false;
     }
-    int frame_size;
-    scanf("%d",&frame_size);
-    fifo(pages,frame_size);
-    lru(pages,frame_size);
+    printf("Enter Time Quantum: ");
+    scanf("%d",&quantum);
+
+    printf("Gantt Chart: ");
+    while(completed<n)
+    {
+        for(int i=0;i<n;i++)
+        {
+            if(arr[i].at<=time && !arr[i].q && arr[i].rt>0)
+            {
+                enqueue(queue,i);
+                arr[i].q=true;
+            }
+        }
+        int curr=dequeue(queue);
+        if(curr==-1)
+        {
+            time++;
+            continue;
+        }
+
+        printf("P%d ",arr[curr].id);
+
+        if(arr[curr].bt==arr[curr].rt) arr[curr].st=time;
+
+        int t=(arr[curr].rt<=quantum)? arr[curr].rt:quantum;
+        time+=t;
+        arr[curr].rt-=t;
+        
+        if(arr[curr].rt==0)
+        {
+            arr[curr].ct=time;
+            arr[curr].tat=arr[curr].ct-arr[curr].at;
+            arr[curr].wt=arr[curr].tat-arr[curr].bt;
+
+            tat+=arr[curr].tat;
+            wt+=arr[curr].wt;
+            completed++;
+        }
+        else{
+            enqueue(queue,curr);
+        }
+    }
+    
+    printf("\nProcess\tAT\tBT\tST\tCT\tTAT\tWT\n");
+    for(int i=0;i<n;i++)
+    {
+        printf("P%d\t%d\t%d\t%d\t%d\t%d\t%d\n",arr[i].id,arr[i].at,arr[i].bt,arr[i].st,arr[i].ct,arr[i].tat,arr[i].wt);
+    }
+    printf("Avg TAT: %.2f \n Avg WT: %.2f",(float)tat/n,(float)wt/n);
+    return 0;
 }
